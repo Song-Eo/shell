@@ -1,0 +1,37 @@
+# 삭제할 프로그램 이름
+$Uninstall_Program = @("MySQL Connector C++ 8.0", "MySQL Connector J", "MySQL Connector NET 8.0.31", "MySQL Connector Python v8.0.31", "MySQL Connector/ODBC 8.0", "MySQL Documents 8.0", "MySQL Examples and Samples 8.0", "MySQL Installer - Community",  "MySQL Server 8.0", "MySQL Shell 8.0.31", "MySQL Workbench 8.0 CE", "MySQL Router 8.0", "반디캠", "반디캠 MPEG-1 디코더")
+
+# 설치된 프로그램 목록
+$Installed_Apps = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*    # 32 bit
+$Installed_Apps += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*     # 64 bit
+
+
+foreach ($Uninstall in $Uninstall_Program){
+	# 삭제할 프로그램 정보
+	$Uninstall_Program_Info = $Installed_Apps | Where-Object { $_.DisplayName -eq $Uninstall }
+	
+	# 프로그램 삭제
+	## msiexe 포함 여부 확인, 프로그램 삭제 진행
+	if ($Uninstall_Program_Info.UninstallString -like "msiexec*") 
+	{
+	    $arg = ($Uninstall_Program_Info.UninstallString -split ' ')[1] 
+	    $arg = ($arg -replace '/I','/X ') + ' /q'
+	    
+	    Start-Process msiexec.exe -ArgumentList $arg -Wait
+	} 
+	else 
+	{
+	    Start-Process $Uninstall_Program_Info.UninstallString -Wait
+	}
+}
+
+
+
+#프로그램 목록 출력
+$Installed_Apps = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*    # 32 bit
+$Installed_Apps += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*     # 64 bit
+ 
+# 설치된 프로그램 목록 보여주기
+$Installed_Apps `
+    | Sort-Object -Property DisplayName `
+    | Format-Table -Property DisplayName, Publisher, DisplayVersion
